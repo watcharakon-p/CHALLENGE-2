@@ -112,27 +112,37 @@ export default function TreeView({renderLabel}: {renderLabel: (node: NodeRow) =>
   );
 
   return (
-    <div className="font-sans"> 
-      <div className="p-4">
+    <div className="font-sans">
+      <section className="border-b border-foreground/10 bg-background/60 p-4">
         <SearchBox
           value={searchQuery}
           onChange={setSearchQuery}
           onResult={setSearchResults}
         />
-      </div>
+      </section>
 
       {searchResults.length > 0 && (
-        <div className="p-4">
-          <h3>Search Results:</h3>
-          {searchResults.map((result) => (
-            <div key={result.id}>
-              <h4>{result.name}</h4>
-            </div>
-          ))}
-        </div>
+        <section className="px-4 py-3">
+          <h3 className="mb-2 text-sm font-medium text-foreground/70">Search Results</h3>
+          <ul className="divide-y divide-foreground/10 overflow-hidden rounded-md border border-foreground/10 bg-background">
+            {searchResults.map((result) => (
+              <li key={result.id} className="group flex items-center justify-between gap-3 px-3 py-2 hover:bg-foreground/[0.04]">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{result.name}</p>
+                  {result.path?.length > 0 && (
+                    <p className="truncate text-xs text-foreground/60">
+                      {result.path.map(p => p.name).join(" / ")}
+                    </p>
+                  )}
+                </div>
+                <span className="ml-2 text-xs text-foreground/50">#{result.id}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      <div className="p-4">
+      <section className="p-2 sm:p-4">
         {rootIds.map((id) => (
           <SubTree
             key={id}
@@ -142,8 +152,9 @@ export default function TreeView({renderLabel}: {renderLabel: (node: NodeRow) =>
             renderLabel={renderLabel}
             onToggle={onToggle}
           />
-        ))}  
-      </div>
+        ))}
+      </section>
     </div>
   );
 }
+
