@@ -11,6 +11,7 @@ export async function seedDatabase({ breadth, depth, cap = 50000 }: SeedOpts) {
     parentId: string | null;
     name: string;
     hasChildren: boolean;
+    sort: number;
   }> = [];
   // Use realistic top-level folders for a file explorer
   const defaultRoots = [
@@ -35,6 +36,7 @@ export async function seedDatabase({ breadth, depth, cap = 50000 }: SeedOpts) {
       parentId: null,
       name: defaultRoots[i % defaultRoots.length] ?? `Root ${i + 1}`,
       hasChildren: depth > 0,
+      sort: i,
     });
   }
 
@@ -42,7 +44,7 @@ export async function seedDatabase({ breadth, depth, cap = 50000 }: SeedOpts) {
     id,
     level: 1,
   }));
-  
+
   while (q.length && toInsert.length < cap) {
     const { id: parentId, level } = q.shift()!;
     if (level > depth) continue;
@@ -51,12 +53,15 @@ export async function seedDatabase({ breadth, depth, cap = 50000 }: SeedOpts) {
     const folderTarget = isLeafLevel ? 0 : Math.max(1, Math.ceil(breadth * 0.5));
     const fileTarget = isLeafLevel ? breadth : Math.max(0, breadth - folderTarget);
 
+    // Maintain a per-parent sort index so folders and files share one sequence
+    let sortIndex = 0;
+
     // Create subfolders
     for (let i = 0; i < folderTarget && toInsert.length < cap; i++) {
       const id = mkId();
       const name = `Folder ${level}-${i + 1}`; // no slashes, folder-like naming
       const hasChildren = level < depth; // folders can have children until depth
-      toInsert.push({ id, parentId, name, hasChildren });
+      toInsert.push({ id, parentId, name, hasChildren, sort: sortIndex++ });
       if (hasChildren) q.push({ id, level: level + 1 });
     }
 
@@ -79,7 +84,7 @@ export async function seedDatabase({ breadth, depth, cap = 50000 }: SeedOpts) {
       const id = mkId();
       const ext = fileExtensions[i % fileExtensions.length] ?? "txt";
       const name = `file_${level}-${i + 1}.${ext}`; // files never have children
-      toInsert.push({ id, parentId, name, hasChildren: false });
+      toInsert.push({ id, parentId, name, hasChildren: false, sort: sortIndex++ });
     }
   }
 
@@ -100,4 +105,3 @@ if (require.main === module) {
     process.exit(0);
   });
 }
-

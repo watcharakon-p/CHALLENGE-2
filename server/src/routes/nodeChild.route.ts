@@ -7,7 +7,7 @@ nodeChildRouter.get("/api/nodes/:id/children", async (req, res) => {
   const id = String(req.params.id);
   const rows = await prisma.node.findMany({
     where: { parentId: id },
-    orderBy: { name: "asc" },
+    orderBy: [{ sort: "asc" }],
   });
   res.json(rows);
 });

@@ -10,16 +10,18 @@ searchRouter.get("/api/search", async (req, res) => {
 
   const hits = (await prisma.$queryRawUnsafe(
     `WITH RECURSIVE r AS (
-      SELECT id, name, "parentId",
+      SELECT id, name, "parentId", sort,
       jsonb_build_array(jsonb_build_object('id', id, 'name', name)) AS path
       FROM "Node" WHERE name ILIKE '%' || $1 || '%'
       UNION ALL
-      SELECT n.id, n.name, n."parentId",
+      SELECT n.id, n.name, n."parentId", n.sort,
       r.path || jsonb_build_object('id', n.id, 'name', n.name)
       FROM r JOIN "Node" n ON r."parentId" = n.id
       )
       SELECT (path->0->>'id') AS id, (path->0->>'name') AS name, path
-      FROM r WHERE "parentId" IS NULL LIMIT $2;`,
+      FROM r WHERE "parentId" IS NULL
+      ORDER BY sort ASC
+      LIMIT $2;`,
     q,
     limit
   )) as any[];

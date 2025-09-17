@@ -3,6 +3,7 @@ export type NodeRow = {
   parentId: string | null;
   name: string;
   hasChildren: boolean;
+  sort: number;
 };
 
 export type SearchHit = {

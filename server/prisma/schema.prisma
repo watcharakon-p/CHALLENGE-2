@@ -18,6 +18,7 @@ model Node {
   parentId    String? @db.Text
   name        String  @db.Text
   hasChildren Boolean
+  sort        Int     @default(0)
 
   parent   Node?  @relation("NodeChildren", fields: [parentId], references: [id], onDelete: Cascade)
   children Node[] @relation("NodeChildren")
