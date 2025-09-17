@@ -12,15 +12,28 @@ export async function seedDatabase({ breadth, depth, cap = 50000 }: SeedOpts) {
     name: string;
     hasChildren: boolean;
   }> = [];
-
+  // Use realistic top-level folders for a file explorer
+  const defaultRoots = [
+    "Documents",
+    "Downloads",
+    "Pictures",
+    "Music",
+    "Videos",
+    "Desktop",
+    "Projects",
+    "Workspace",
+    "Archives",
+    "Temp",
+  ];
   const roots: string[] = [];
-  for (let i = 0; i < Math.min(breadth, 50) && toInsert.length < cap; i++) {
+  const rootCount = Math.min(breadth, defaultRoots.length, 50);
+  for (let i = 0; i < rootCount && toInsert.length < cap; i++) {
     const id = mkId();
     roots.push(id);
     toInsert.push({
       id,
       parentId: null,
-      name: `Root ${i + 1}`,
+      name: defaultRoots[i % defaultRoots.length] ?? `Root ${i + 1}`,
       hasChildren: depth > 0,
     });
   }
@@ -33,14 +46,40 @@ export async function seedDatabase({ breadth, depth, cap = 50000 }: SeedOpts) {
   while (q.length && toInsert.length < cap) {
     const { id: parentId, level } = q.shift()!;
     if (level > depth) continue;
-    for (let i = 0; i < breadth && toInsert.length < cap; i++) {
+    // Decide how many folders vs files to create at this level
+    const isLeafLevel = level >= depth;
+    const folderTarget = isLeafLevel ? 0 : Math.max(1, Math.ceil(breadth * 0.5));
+    const fileTarget = isLeafLevel ? breadth : Math.max(0, breadth - folderTarget);
+
+    // Create subfolders
+    for (let i = 0; i < folderTarget && toInsert.length < cap; i++) {
       const id = mkId();
-      const parentName =
-        toInsert.find((n) => n.id === parentId)?.name ?? "Node";
-      const name = `${parentName} / Item ${i + 1}`;
-      const hasChildren = level < depth;
+      const name = `Folder ${level}-${i + 1}`; // no slashes, folder-like naming
+      const hasChildren = level < depth; // folders can have children until depth
       toInsert.push({ id, parentId, name, hasChildren });
       if (hasChildren) q.push({ id, level: level + 1 });
+    }
+
+    // Create files for this folder
+    const fileExtensions = [
+      "txt",
+      "md",
+      "pdf",
+      "png",
+      "jpg",
+      "svg",
+      "json",
+      "ts",
+      "tsx",
+      "js",
+      "csv",
+      "zip",
+    ];
+    for (let i = 0; i < fileTarget && toInsert.length < cap; i++) {
+      const id = mkId();
+      const ext = fileExtensions[i % fileExtensions.length] ?? "txt";
+      const name = `file_${level}-${i + 1}.${ext}`; // files never have children
+      toInsert.push({ id, parentId, name, hasChildren: false });
     }
   }
 
@@ -61,3 +100,4 @@ if (require.main === module) {
     process.exit(0);
   });
 }
+
