@@ -111,6 +111,23 @@ export default function TreeView({renderLabel}: {renderLabel: (node: NodeRow) =>
     [state.expandedNodes,state.childrenMap]
   );
 
+  // highlight matched text in search results
+  const highlight = (text: string, query: string) => {
+    if (!query) return text;
+    const q = query.trim();
+    if (!q) return text;
+    // Escape regex metacharacters in the query string
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const parts = text.split(new RegExp(`(${escaped})`, "ig"));
+    return parts.map((part, i) =>
+      part.toLowerCase() === q.toLowerCase() ? (
+        <mark key={i} className="rounded bg-yellow-200/60 px-0.5 py-0 text-foreground">{part}</mark>
+      ) : (
+        <span key={i}>{part}</span>
+      )
+    );
+  };
+
   return (
     <div className="font-sans">
       <section className="border-b border-foreground/10 bg-background/60 p-4">
@@ -126,16 +143,27 @@ export default function TreeView({renderLabel}: {renderLabel: (node: NodeRow) =>
           <h3 className="mb-2 text-sm font-medium text-foreground/70">Search Results</h3>
           <ul className="divide-y divide-foreground/10 overflow-hidden rounded-md border border-foreground/10 bg-background">
             {searchResults.map((result) => (
-              <li key={result.id} className="group flex items-center justify-between gap-3 px-3 py-2 hover:bg-foreground/[0.04]">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{result.name}</p>
+              <li
+                key={result.id}
+                className="group flex items-center gap-3 px-3 py-2 hover:bg-foreground/[0.04]"
+                title={result.path?.map(p => p.name).join(" / ") || result.name}
+              >
+                <span className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-md bg-blue-50 text-blue-600 ring-1 ring-inset ring-blue-200">🔎</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {highlight(result.name, searchQuery)}
+                  </p>
                   {result.path?.length > 0 && (
-                    <p className="truncate text-xs text-foreground/60">
-                      {result.path.map(p => p.name).join(" / ")}
+                    <p className="flex min-w-0 items-center gap-1 truncate text-xs text-foreground/60">
+                      {result.path.map((p, idx) => (
+                        <span key={p.id} className="inline-flex items-center gap-1">
+                          <span className="truncate max-w-[140px]">{p.name}</span>
+                          {idx < result.path.length - 1 && <span className="text-foreground/30">›</span>}
+                        </span>
+                      ))}
                     </p>
                   )}
                 </div>
-                <span className="ml-2 text-xs text-foreground/50">#{result.id}</span>
               </li>
             ))}
           </ul>
