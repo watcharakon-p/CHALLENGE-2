@@ -1,4 +1,4 @@
-# CHALLENGE-2
+# CHALLENGE 2 — TREE & HIERARCHY RENDERING
 
 This is a sample full‑stack project with two main parts:
 
