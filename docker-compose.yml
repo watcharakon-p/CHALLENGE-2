@@ -26,5 +26,18 @@ services:
     command: >
       sh -lc "npx prisma generate && npx prisma migrate dev --name init && npm run dev"
 
+  web:
+    build: ./web
+    container_name: challenge_2_web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    volumes:
+      - ./web:/usr/src/app
+      - /usr/src/app/node_modules
+    command: >
+      sh -lc "npm run dev"
+
 volumes:
   pgdata:
